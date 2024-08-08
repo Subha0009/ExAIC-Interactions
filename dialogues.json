@@ -9,7 +9,7 @@
         "responses": [
           {
             "id": 3,
-            "text": "All of these requirements should be command line arguments. I should be able to specify them as needed."
+            "text": "All of these requirements should be command line arguments. I should be able to specify them as needed.",
             "responses": [
               {
                 "id": 4,
