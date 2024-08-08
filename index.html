@@ -30,7 +30,6 @@
   <div id="tree"></div>
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <script>
-    // Fetch the JSON file
     fetch('dialogues.json')
       .then(response => response.json())
       .then(dialoguesData => {
@@ -52,8 +51,7 @@
 
         let i = 0;
         const duration = 750;
-        const rectWidth = 200;
-        const rectHeight = 50;
+        const padding = 10;
 
         const update = (source) => {
           const treeData = treeLayout(root);
@@ -71,10 +69,11 @@
             .on('click', click);
 
           nodeEnter.append('rect')
-            .attr('width', rectWidth)
-            .attr('height', rectHeight)
-            .attr('x', -rectWidth / 2)
-            .attr('y', -rectHeight / 2)
+            .attr('class', 'node-rect')
+            .attr('width', 0)
+            .attr('height', 0)
+            .attr('x', 0)
+            .attr('y', 0)
             .style('fill', d => d._children ? 'lightsteelblue' : '#fff');
 
           nodeEnter.append('text')
@@ -82,7 +81,8 @@
             .attr('x', 0)
             .attr('text-anchor', 'middle')
             .text(d => d.data.text)
-            .call(wrap, rectWidth - 10); // call wrap function
+            .each(wrap)
+            .call(adjustRectSize);
 
           const nodeUpdate = nodeEnter.merge(node);
 
@@ -91,10 +91,10 @@
             .attr('transform', d => `translate(${d.x},${d.y})`);
 
           nodeUpdate.select('rect')
-            .attr('width', rectWidth)
-            .attr('height', rectHeight)
-            .attr('x', -rectWidth / 2)
-            .attr('y', -rectHeight / 2)
+            .attr('width', d => d.bbox.width + padding * 2)
+            .attr('height', d => d.bbox.height + padding * 2)
+            .attr('x', d => -(d.bbox.width / 2 + padding))
+            .attr('y', d => -(d.bbox.height / 2 + padding))
             .style('fill', d => d._children ? 'lightsteelblue' : '#fff')
             .attr('cursor', 'pointer');
 
@@ -104,10 +104,8 @@
             .remove();
 
           nodeExit.select('rect')
-            .attr('width', rectWidth)
-            .attr('height', rectHeight)
-            .attr('x', -rectWidth / 2)
-            .attr('y', -rectHeight / 2);
+            .attr('width', 0)
+            .attr('height', 0);
 
           nodeExit.select('text')
             .style('fill-opacity', 1e-6);
@@ -160,28 +158,34 @@
           }
         };
 
-        function wrap(text, width) {
-          text.each(function() {
-            const text = d3.select(this),
-                  words = text.text().split(/\s+/).reverse(),
-                  lineHeight = 1.1; // ems
-            let word,
-                line = [],
-                lineNumber = 0,
-                y = text.attr("y"),
-                dy = parseFloat(text.attr("dy")),
-                tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
-            while (word = words.pop()) {
-              line.push(word);
+        function wrap(d) {
+          const self = d3.select(this);
+          const text = self.text();
+          const words = text.split(/\s+/).reverse();
+          let word,
+              line = [],
+              lineNumber = 0,
+              lineHeight = 1.1, // ems
+              x = self.attr("x"),
+              y = self.attr("y"),
+              dy = parseFloat(self.attr("dy")),
+              tspan = self.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+          while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > 180) {
+              line.pop();
               tspan.text(line.join(" "));
-              if (tspan.node().getComputedTextLength() > width) {
-                line.pop();
-                tspan.text(line.join(" "));
-                line = [word];
-                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-              }
+              line = [word];
+              tspan = self.append("tspan").attr("x", x).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
             }
-          });
+          }
+        }
+
+        function adjustRectSize(d) {
+          const self = d3.select(this);
+          const bbox = self.node().getBBox();
+          d.bbox = bbox;
         }
 
         function collapse(d) {
