@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "text": "Hello, how can I help you?",
+    "responses": [
+      {
+        "id": 2,
+        "text": "I have a question about your services.",
+        "responses": [
+          {
+            "id": 3,
+            "text": "Sure, what would you like to know?"
+          },
+          {
+            "id": 4,
+            "text": "Can you tell me more about pricing?"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "text": "What are your hours of operation?"
+      }
+    ]
+  }
+]
